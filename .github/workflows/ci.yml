@@ -15,15 +15,28 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-name: Airflow
-on: [push]
+name: "Airflow Helm chart test"
+on: [pull_request, push]
+
 jobs:
-  github-actions-hello-world:
-    name: Hello world
+  kind:
     runs-on: ubuntu-latest
-    env:
-      SAMPLE: yep
     steps:
-      - uses: actions/checkout@master
-      - name: "Hello World step"
-        run: echo $SAMPLE
+    - uses: actions/checkout@master
+    - name: Set up kind cluster
+      run: scripts/ci/start-kind-cluster
+    - name: Test cluster running
+      run: |
+        kubectl cluster-info
+        kubectl get pods -n kube-system
+    - name: download helm
+      run: |
+        curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3
+        chmod 700 get_helm.sh
+        ./get_helm.sh
+    - name: create namespace
+      run: kubectl create namespace airflow
+    - name: pull astronomer helm chart
+      run: |
+        helm repo add astronomer https://helm.astronomer.io
+        helm install airflow --namespace airflow astronomer/airflow
