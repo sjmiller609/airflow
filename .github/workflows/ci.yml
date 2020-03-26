@@ -23,20 +23,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@master
-    - name: Set up kind cluster
-      run: scripts/ci/start-kind-cluster
-    - name: Test cluster running
+    - name: Install Kubernetes-related tools
+      run: scripts/ci/install_helm_tools.sh
+    - name: Set up Kind cluster
+      run: scripts/ci/start_kind_cluster.sh
+    - name: Show versions
       run: |
-        kubectl cluster-info
-        kubectl get pods -n kube-system
-    - name: download helm
+        helm version
+        kind version
+        kubectl version
+    - name: Install Helm chart
       run: |
-        curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3
-        chmod 700 get_helm.sh
-        ./get_helm.sh
-    - name: create namespace
-      run: kubectl create namespace airflow
-    - name: pull astronomer helm chart
-      run: |
-        helm repo add astronomer https://helm.astronomer.io
-        helm install airflow --namespace airflow astronomer/airflow
+        helm install --name airflow ./charts/airflow
